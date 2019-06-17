@@ -127,7 +127,7 @@ func updateRecords(collection *mongo.Collection) {
 
 }
 
-func main() {
+func main() {git c
 
 	envy.Parse("MGDEMO") // looks for MGDEMO_SERVERNAME
 	flag.Parse()
