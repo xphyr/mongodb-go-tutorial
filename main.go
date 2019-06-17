@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
-	"flag"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/jamiealquiza/envy"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"github.com/jamiealquiza/envy"
 )
 
 type Trainer struct {
@@ -27,33 +28,43 @@ func init() {
 	flag.StringVar(&serverName, "serverName", "localhost:27017", "mongoDB server to connect to")
 }
 
-func insertRecords(collection *mongo.Collection){
+func insertRecords(collection *mongo.Collection) {
 	// Some dummy data to add to the Database
 	ash := Trainer{"Ash", 10, "Pallet Town"}
 	misty := Trainer{"Misty", 10, "Cerulean City"}
 	brock := Trainer{"Brock", 15, "Pewter City"}
 
 	// looping a lot
-	for i := 0; i <1000; i++ {
-	// Insert a single document
-	insertResult, err := collection.InsertOne(context.TODO(), ash)
+	for i := 0; i < 1000; i++ {
+		// Insert a single document
+		insertResult, err := collection.InsertOne(context.TODO(), ash)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+
+		// Insert multiple documents
+		trainers := []interface{}{misty, brock}
+
+		insertManyResult, err := collection.InsertMany(context.TODO(), trainers)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
+	}
+}
+
+func deleteRecords(collection *mongo.Collection) {
+	// Delete all the documents in the collection
+	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+	fmt.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 
-	// Insert multiple documents
-	trainers := []interface{}{misty, brock}
-
-	insertManyResult, err := collection.InsertMany(context.TODO(), trainers)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
-}
 }
 
-func queryRecords(collection *mongo.Collection){
+func queryRecords(collection *mongo.Collection) {
 
 	// Update a document
 	filter := bson.D{{"name", "Ash"}}
@@ -69,7 +80,6 @@ func queryRecords(collection *mongo.Collection){
 	fmt.Printf("Found a single document: %+v\n", result)
 
 	findOptions := options.Find()
-	findOptions.SetLimit(2)
 
 	var results []*Trainer
 
@@ -99,13 +109,31 @@ func queryRecords(collection *mongo.Collection){
 	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
 }
 
+func updateRecords(collection *mongo.Collection) {
+	// Update a document
+	filter := bson.D{{"name", "Ash"}}
+
+	update := bson.D{
+		{"$inc", bson.D{
+			{"age", 1},
+		}},
+	}
+
+	updateResult, err := collection.UpdateMany(context.TODO(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+
+}
+
 func main() {
 
 	envy.Parse("MGDEMO") // looks for MGDEMO_SERVERNAME
 	flag.Parse()
 
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://"+serverName)
+	clientOptions := options.Client().ApplyURI("mongodb://" + serverName)
 
 	// Connect to MongoDB
 	fmt.Printf("Connecting to server: %v\n", serverName)
@@ -143,34 +171,17 @@ func main() {
 	// Get a handle for your collection
 	collection := client.Database("test").Collection("trainers")
 
-	// preping for forking off to a go routine
-	insertRecords(collection)
-	insertRecords(collection)
-	
-	// Update a document
-	filter := bson.D{{"name", "Ash"}}
-
-	update := bson.D{
-		{"$inc", bson.D{
-			{"age", 1},
-		}},
+	for {
+		// preping for forking off to a go routine
+		insertRecords(collection)
+		insertRecords(collection)
+		updateRecords(collection)
+		queryRecords(collection)
+		deleteRecords(collection)
+		fmt.Println("Taking a 10 second breather...")
+		time.Sleep(10 * time.Second)
+		fmt.Println("Lets GO do that again!")
 	}
-
-	updateResult, err := collection.UpdateOne(context.TODO(), filter, update)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
-
-	queryRecords(collection)
-
-	// Delete all the documents in the collection
-	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 
 	// Close the connection once no longer needed
 	err = client.Disconnect(context.TODO())

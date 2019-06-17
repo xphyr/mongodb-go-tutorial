@@ -6,5 +6,5 @@ RUN cd /src && go build -o mongo_exerciser
 # final stage
 FROM alpine
 WORKDIR /app
-COPY --from=build-env /src/mongodb-go-tutorial /app/
+COPY --from=build-env /src/mongo_exerciser /app/
 CMD ["/app/mongo_exerciser"]
