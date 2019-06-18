@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: memuserkubectl
-        image: quay.io/xphyr/mongo-exerciser:v4
+        image: quay.io/xphyr/mongo-exerciser:v5
         command: ["/app/mongo_exerciser"]
         env:
           - name: MGDEMO_SERVERNAME

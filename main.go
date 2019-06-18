@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -43,7 +42,8 @@ func insertRecords(client *mongo.Client) {
 		// Insert a single document
 		insertResult, err := collection.InsertOne(context.TODO(), ash)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		fmt.Println("Inserted a single document: ", insertResult.InsertedID)
 
@@ -52,7 +52,8 @@ func insertRecords(client *mongo.Client) {
 
 		insertManyResult, err := collection.InsertMany(context.TODO(), trainers)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 		fmt.Println("Inserted multiple documents: ", insertManyResult.InsertedIDs)
 	}
@@ -65,7 +66,8 @@ func deleteRecords(client *mongo.Client) {
 	// Delete all the documents in the collection
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 	fmt.Printf("Deleted %v documents in the trainers collection\n", deleteResult.DeletedCount)
 
@@ -83,7 +85,8 @@ func queryRecords(client *mongo.Client) {
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	fmt.Printf("Found a single document: %+v\n", result)
@@ -95,7 +98,8 @@ func queryRecords(client *mongo.Client) {
 	// Finding multiple documents returns a cursor
 	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	// Iterate through the cursor
@@ -103,14 +107,16 @@ func queryRecords(client *mongo.Client) {
 		var elem Trainer
 		err := cur.Decode(&elem)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			return
 		}
 
 		results = append(results, &elem)
 	}
 
 	if err := cur.Err(); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 	// Close the cursor once finished
 	cur.Close(context.TODO())
@@ -133,7 +139,8 @@ func updateRecords(client *mongo.Client) {
 
 	updateResult, err := collection.UpdateMany(context.TODO(), filter, update)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 
@@ -151,13 +158,13 @@ func main() {
 	fmt.Printf("Connecting to server: %v\n", serverName)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	// Check the connection
 	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	fmt.Println("Connected to MongoDB!")
@@ -197,7 +204,7 @@ func main() {
 	err = client.Disconnect(context.TODO())
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	} else {
 		fmt.Println("Connection to MongoDB closed.")
 	}
