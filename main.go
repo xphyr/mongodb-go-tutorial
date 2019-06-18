@@ -29,7 +29,10 @@ func init() {
 	flag.StringVar(&serverName, "serverName", "localhost:27017", "mongoDB server to connect to")
 }
 
-func insertRecords(collection *mongo.Collection) {
+func insertRecords(client *mongo.Client) {
+
+	collection := client.Database("test").Collection("trainers")
+
 	// Some dummy data to add to the Database
 	ash := Trainer{"Ash", 10, "Pallet Town"}
 	misty := Trainer{"Misty", 10, "Cerulean City"}
@@ -55,7 +58,10 @@ func insertRecords(collection *mongo.Collection) {
 	}
 }
 
-func deleteRecords(collection *mongo.Collection) {
+func deleteRecords(client *mongo.Client) {
+
+	collection := client.Database("test").Collection("trainers")
+
 	// Delete all the documents in the collection
 	deleteResult, err := collection.DeleteMany(context.TODO(), bson.D{{}})
 	if err != nil {
@@ -65,7 +71,9 @@ func deleteRecords(collection *mongo.Collection) {
 
 }
 
-func queryRecords(collection *mongo.Collection) {
+func queryRecords(client *mongo.Client) {
+
+	collection := client.Database("test").Collection("trainers")
 
 	// Update a document
 	filter := bson.D{{"name", "Ash"}}
@@ -110,7 +118,10 @@ func queryRecords(collection *mongo.Collection) {
 	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
 }
 
-func updateRecords(collection *mongo.Collection) {
+func updateRecords(client *mongo.Client) {
+
+	collection := client.Database("test").Collection("trainers")
+
 	// Update a document
 	filter := bson.D{{"name", "Ash"}}
 
@@ -169,16 +180,13 @@ func main() {
 		os.Exit(2)
 	}(client)
 
-	// Get a handle for your collection
-	collection := client.Database("test").Collection("trainers")
-
 	for {
 		// preping for forking off to a go routine
-		insertRecords(collection)
-		insertRecords(collection)
-		updateRecords(collection)
-		queryRecords(collection)
-		deleteRecords(collection)
+		insertRecords(client)
+		insertRecords(client)
+		updateRecords(client)
+		queryRecords(client)
+		deleteRecords(client)
 		mySleep := rand.Intn(10)
 		fmt.Printf("Taking a %v second breather... \n", mySleep)
 		time.Sleep(time.Duration(mySleep) * time.Second)
