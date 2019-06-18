@@ -15,10 +15,9 @@ spec:
         app: mongoexe
     spec:
       containers:
-
-      - name: memuserkubectl 
-        image: quay.io/xphyr/mongo-exerciser:v2
+      - name: memuserkubectl
+        image: quay.io/xphyr/mongo-exerciser:v3
         command: ["/app/mongo_exerciser"]
         env:
           - name: MGDEMO_SERVERNAME
-            value: "myreplicaset-0.myreplicaset-svc.mark.svc.cluster.local,myreplicaset-1.myreplicaset-svc.mark.svc.cluster.local,myreplicaset-0.myreplicaset-svc.mark.svc.cluster.local:27017"
+            value: "myreplicaset-0.myreplicaset-svc.mark.svc.cluster.local,myreplicaset-1.myreplicaset-svc.mark.svc.cluster.local,myreplicaset-2.myreplicaset-svc.mark.svc.cluster.local:27017"

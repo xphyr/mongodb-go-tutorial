@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -127,7 +128,7 @@ func updateRecords(collection *mongo.Collection) {
 
 }
 
-func main() {git c
+func main() {
 
 	envy.Parse("MGDEMO") // looks for MGDEMO_SERVERNAME
 	flag.Parse()
@@ -178,8 +179,9 @@ func main() {git c
 		updateRecords(collection)
 		queryRecords(collection)
 		deleteRecords(collection)
-		fmt.Println("Taking a 10 second breather...")
-		time.Sleep(10 * time.Second)
+		mySleep := rand.Intn(10)
+		fmt.Printf("Taking a %v second breather... \n", mySleep)
+		time.Sleep(time.Duration(mySleep) * time.Second)
 		fmt.Println("Lets GO do that again!")
 	}
 
