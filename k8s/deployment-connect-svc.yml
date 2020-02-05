@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-exerciser
+  labels:
+    app: mongoexe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongoexe
+  template:
+    metadata:
+      labels:
+        app: mongoexe
+    spec:
+      containers:
+      - name: memuserkubectl
+        image: quay.io/xphyr/mongo-exerciser:v5
+        command: ["/app/mongo_exerciser"]
+        env:
+          - name: MGDEMO_SERVERNAME
+            value: "myshardedcluster-svc.mongodemo.svc.cluster.local:27017"
